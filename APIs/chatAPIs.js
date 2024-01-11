@@ -1,6 +1,7 @@
 const userModel = require("../models/user")
 const chatModel = require("../models/chat")
 const Doc = require("../models/document")
+const StarredMessage = require("../models/StarredMessage")
 
 
 
@@ -84,3 +85,25 @@ exports.updateChat = async (req, res) => {
     return res.status(500).json({ error: error.message })
   }
 }
+
+
+// Stareed Messages API
+exports.getAllStarredMessages = async (req, res) => {
+  try {
+      const userId = req.params.userId;
+      const user = await userModel.findById(userId);
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Retrieve StarredMessage documents using the IDs stored in user.starredMessages
+      const starredMessages = await StarredMessage.find({ _id: { $in: user.starredMessages } });
+
+      return res.status(200).json(starredMessages);
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+

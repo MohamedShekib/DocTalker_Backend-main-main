@@ -67,6 +67,13 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 5,  // Default value for free subscription -- change if the user has a different subscription
     },
+
+    // Starred messages
+    starredMessages: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'StarredMessage'
+    }],
+
     },
  {
     timestamps: true

@@ -4,6 +4,13 @@ const { createUser, deleteUser, updateUser } = require('../controllers/userContr
 const { auth } = require('../middlewares/auth');
 const {signup , login , logOut , forgotPassword , forgotPasswordSubmit , resetPassword} = require('../controllers/authController');
 const { verifyOtp } = require('../controllers/authController');
+const { starMessage } = require('../controllers/userController');
+
+
+
+
+
+
 function isLoggedIn(req, res, next) {
     require.user ? next() : res.sendStatus(401)
   }
@@ -15,7 +22,7 @@ router.post("/forgotPassword", forgotPassword);
 router.post("/forgotPassword/forgotPasswordSubmit", forgotPasswordSubmit);
 router.post("/forgotPassword/forgotPasswordSubmit/resetPassword", resetPassword);
 
-// Routes that require authentication
+// Routes that require authentication user API
 router.delete("/", auth, deleteUser);
 router.put("/", auth, updateUser);
 
@@ -30,11 +37,17 @@ router.get('/auth/protected',isLoggedIn,(req, res) => {
     res.send('success google authenticate')
     })
 
+
 router.get('/auth/failure',(req, res) => {
         res.send('something wrong try again')
-        })
+})
+
+
 //TODO OTP AUTH
 router.post('/otp/verify',auth,verifyOtp);
 // router.post('/otp/resend',auth, resendOtp);
+
+// user starred messages
+router.post('/starMessage', auth, starMessage);
 
 module.exports = router;
