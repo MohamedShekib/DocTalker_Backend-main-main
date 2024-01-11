@@ -18,29 +18,29 @@ function isLoggedIn(req, res, next) {
 router.post("/login", login);
 router.post("/signup", signup);
 router.get("/logout",isLoggedIn, logOut);
-router.post("/forgotPassword", forgotPassword);
-router.post("/forgotPassword/forgotPasswordSubmit", forgotPasswordSubmit);
-router.post("/forgotPassword/forgotPasswordSubmit/resetPassword", resetPassword);
+// router.post("/forgotPassword", forgotPassword);
+// router.post("/forgotPassword/forgotPasswordSubmit", forgotPasswordSubmit);
+// router.post("/forgotPassword/forgotPasswordSubmit/resetPassword", resetPassword);
 
 // Routes that require authentication user API
 router.delete("/", auth, deleteUser);
 router.put("/", auth, updateUser);
 
-// TODO GOOGLE AUTH
-router.get('/auth/google', passport.authenticate('google',{scope:['email','profile']}) );
-router.get('/auth/google/redirect', passport.authenticate('google',
-{
-  successRedirect:'/auth/protected',
-  failureRedirect:'/auth/failure',
-}));
-router.get('/auth/protected',isLoggedIn,(req, res) => {
-    res.send('success google authenticate')
-    })
+// // TODO GOOGLE AUTH
+// router.get('/auth/google', passport.authenticate('google',{scope:['email','profile']}) );
+// router.get('/auth/google/redirect', passport.authenticate('google',
+// {
+//   successRedirect:'/auth/protected',
+//   failureRedirect:'/auth/failure',
+// }));
+// router.get('/auth/protected',isLoggedIn,(req, res) => {
+//     res.send('success google authenticate')
+//     })
 
 
-router.get('/auth/failure',(req, res) => {
-        res.send('something wrong try again')
-})
+// router.get('/auth/failure',(req, res) => {
+//         res.send('something wrong try again')
+// })
 
 
 //TODO OTP AUTH

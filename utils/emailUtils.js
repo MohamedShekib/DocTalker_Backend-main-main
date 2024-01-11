@@ -23,7 +23,7 @@ const sendOTPEmail = async (toEmail, otp) => {
     };
 
     // Send email
-    transporter.sendMail(mailOptions, (error, info)) ;
+    transporter.sendMail(mailOptions) ;
 
   } catch (error) {
     console.log("Error sending OTP email:", error);
