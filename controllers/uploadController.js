@@ -21,7 +21,9 @@ exports.handler = async (req, res) => {
   const currUser = req.user;
   console.log(currUser);
   const isOkayToUpload = currUser.maxUploadRequest - currUser.uploadRequest > 0;
-  const isVerfied = user.findById(currUser._id).isVerfied;
+
+  const isVerfied = currUser.isVerified ;
+  console.log(isVerfied);
 
   if(!isVerfied)
   {

@@ -80,6 +80,7 @@ exports.handler = async (req, res) => {
 
 //   console.log('--contexts--', contexts);
 
+
   // build a similar search function
 const file = await chatmodel.findById(id);
 
