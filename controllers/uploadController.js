@@ -4,6 +4,7 @@ const slugify = require('slugify');
 const {uploadFile} = require('../services/aws');
 const {deleteFile}  = require('../services/aws');
 const chatmodel = require('../models/chat');
+const user = require("../models/user")
 
  
 exports.handler = async (req, res) => {
@@ -20,6 +21,12 @@ exports.handler = async (req, res) => {
   const currUser = req.user;
   console.log(currUser);
   const isOkayToUpload = currUser.maxUploadRequest - currUser.uploadRequest > 0;
+  const isVerfied = user.findById(currUser._id).isVerfied;
+
+  if(!isVerfied)
+  {
+        return res.status(400).json({message : 'Please verfiy your OTP first'});
+  }
 
   if(!isOkayToUpload)
   {
