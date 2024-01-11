@@ -9,7 +9,7 @@ const { auth } = require('../middlewares/auth');
 
 
 // for testing only -- Chat CRUD Operations
-router.use(auth);
+// router.use(auth);
 router.get("/:id", getChat);
 router.get("/" , getAllChats);
 router.delete("/:id",deleteChat);

@@ -90,20 +90,25 @@ exports.updateChat = async (req, res) => {
 // Stareed Messages API
 exports.getAllStarredMessages = async (req, res) => {
   try {
-      const userId = req.params.userId;
-      const user = await userModel.findById(userId);
+    const userId = req.params.userId;
+    const user = await userModel.findById(userId);
 
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-      // Retrieve StarredMessage documents using the IDs stored in user.starredMessages
-      const starredMessages = await StarredMessage.find({ _id: { $in: user.starredMessages } });
+    // Check if the 'starredMessages' property exists on the user object
+    if (!user.starredMessages) {
+      return res.status(404).json({ message: 'Starred messages not found for the user' });
+    }
 
-      return res.status(200).json(starredMessages);
+    // Retrieve StarredMessage documents using the IDs stored in user.starredMessages
+    const starredMessages = await StarredMessage.find({ _id: { $in: user.starredMessages } });
+
+    return res.status(200).json(starredMessages);
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 

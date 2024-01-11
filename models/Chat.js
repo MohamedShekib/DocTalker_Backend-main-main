@@ -17,8 +17,9 @@ const chatSchema = new mongoose.Schema(
       {
         role: { type: String, enum: ["user", "assistant"], default: "user" },
         content: String,
+        id: mongoose.Schema.Types.ObjectId, // Include _id for each message
       },
-    ],
+    ] ,
   },
   {
     timestamps: true,
