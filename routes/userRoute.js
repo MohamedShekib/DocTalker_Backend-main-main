@@ -44,7 +44,7 @@ router.put("/", auth, updateUser);
 
 
 //TODO OTP AUTH
-router.post('/otp/verify',auth,verifyOtp);
+router.post('/otp/verify',verifyOtp);
 // router.post('/otp/resend',auth, resendOtp);
 
 // user starred messages

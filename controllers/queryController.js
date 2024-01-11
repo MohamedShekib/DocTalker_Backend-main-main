@@ -1,112 +1,139 @@
-const { getCompletion } = require("../services/openAi");
-const { getEmbeddings } = require("../services/huggingface");
-const { connectDB } = require("../config/database");
-const Doc = require("../models/document");
-const chatModel = require("../models/chat");
-const userModel = require("../models/user");
+const { getCompletion } = require('../services/openAi');
+const { getEmbeddings } = require('../services/huggingface');
+const { connectDB} = require('../config/database');
+const Doc = require('../models/document');
+const chatmodel = require('../models/chat');
 const { cosineSimilarity } = require("../utils/cosineSimilarity");
+const { ObjectId } = require('mongodb');
 
-const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
+let chathistory = [];
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
 
-const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-
-io.on("connection", (socket) => {
-  console.log("Client connected");
-
-  socket.on("disconnect", () => {
-    console.log("Client disconnected");
-  });
-});
+// pinecone config
+// TODO : ADD THE PINECONE CONFIG TO CONFIGs/PINECONE.JS
+// const pinecone = await initialize();
 
 exports.handler = async (req, res) => {
+  // 1. check for POST call
+  // peter send us query and id of single chat
   try {
-    await connectDB();
-    const { _id: userId } = req.user;
-    const { query, id } = req.body;
+    const { query , id } = req.body; 
+  
 
-    const user = await userModel.findById(userId).catch((error) => {
-      console.error("Error fetching user from the database:", error);
-      return res.status(500).json({ error: "Internal Server Error" });
-    });
+  // 2. connect to mongodb
+  await connectDB();
 
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
+  await chatmodel.findOneAndUpdate({
+    _id : id,
+  },{
+    $push:{
+      messages: {role: 'user',content: query },
     }
+  })
+  chathistory = await chatmodel.findById(id).find({});
+  
+  
+  chathistory = chathistory[0].messages.map(chat=>{return {role:chat.role,content:chat.content }});
+  
+ // 3. query the file by id
 
-    const chats = user.chats;
-    if (!chats.includes(id)) {
-      return res.status(400).json({ message: "Unauthorized" });
-    }
-
-    const chat = await chatModel.findById(id).catch((error) => {
-      console.error("Error fetching chat from the database:", error);
-      return res.status(500).json({ error: "Internal Server Error" });
-    });
-
-    const chunks = await Doc.findById(chat.documentId).select("Chunks -_id").catch((error) => {
-      console.error("Error fetching chunks from the database:", error);
-      return res.status(500).json({ error: "Internal Server Error" });
-    });
-
-    const questionEmb = await getEmbeddings(query);
-
-    const similarityResults = [];
-    chunks.Chunks.forEach((chunk) => {
-      const similarity = cosineSimilarity(questionEmb, chunk.embeddings);
-      similarityResults.push({ chunk, similarity });
-    });
-
-    similarityResults.sort((a, b) => b.similarity - a.similarity);
-    const topThree = similarityResults.slice(0, 3).map((result) => result.chunk.rawText);
-
-    const languageResponse = "English";
-    const promptStart = `Answer the question based on the context below with ${languageResponse}:\n\n`;
-    const promptEnd = `\n\nQuestion: ${query} \n\nAnswer:`;
-
-    const prompt = `${promptStart} ${topThree.join("\n")} ${promptEnd}`;
-    const chatHistory = chat.messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-    }));
-
-    chatHistory.push({ role: "user", content: prompt });
-
-    const responseStream = await getCompletion(chatHistory);
-    const fullResponse = [];
-
-    for await (const part of responseStream) {
-      const text = part.choices[0]?.delta?.content || "";
-      chatHistory.push({ role: "assistant", content: text });
-      fullResponse.push({ role: "assistant", content: text });
-
-      // Send -reaaal time data - each chunk to the frontend --> to connected sockets
-      io.emit("chat_message", { role: "assistant", content: text });
-    }
-
-    // Store the full response in the database
-    if (fullResponse.length > 0) {
-      await chatModel.findByIdAndUpdate(id, { messages: fullResponse });
-    }
-
-    if (fullResponse.length === 0) {
-      return res.status(400).json({ message: "Error" });
-    }
-
-    chatHistory.pop();
-    chatHistory.push({ role: "user", content: query });
-    await chatModel.findByIdAndUpdate(id, { messages: chatHistory });
-
-    return res.status(200).json({ response: fullResponse });
-  } catch (error) {
-    console.error(error.message);
-    return res.status(500).json({ error: "Internal Server Error" });
+  const myFile = await chatmodel.findById(id).find({}).select("documentId -_id");
+  
+  if (!myFile) {
+    return res.status(400).send({ message: 'invalid file id' });
   }
+
+
+  //4. get embeddings for the query
+  const questionEmb = await getEmbeddings(query);
+
+
+
+  //////////////////////// PINECONE /////////////////////
+//   // 5. initialize pinecone
+//   const pinecone = new Pinecone({
+//     environment: process.env.PDB_ENV,
+//     apiKey: process.env.PDB_KEY,
+// });
+
+//   // 6. connect to index
+//   const index = pinecone.Index(myFile.vectorIndex);
+
+//   // 7. query the pinecone db
+//   const queryRequest = {
+//     vector: questionEmb,
+//     topK: 2,
+//     includeValues: true,
+//     includeMetadata: true,
+//   };
+
+//   // TODO : take only the first result or 2
+
+//   let result = await index.query(queryRequest);
+//   console.log('--result--', result);
+
+//   // 8. get the metadata from the results
+//   let contexts = result['matches'].map((item) => item['metadata'].text);
+
+//   contexts = contexts.join('\n\n---\n\n');
+
+//   console.log('--contexts--', contexts);
+
+  // build a similar search function
+const file = await chatmodel.findById(id);
+
+const thedocument = await Doc.findById(file.documentId);
+
+
+
+const similarityResults = [] ;
+for(let i=0; i<thedocument.Chunks.length; i++){
+  const chunk = thedocument.Chunks[i];
+  const similarity = cosineSimilarity(questionEmb,chunk.embeddings);
+  similarityResults.push({ chunk, similarity });
+}
+
+
+//sort to get the highest three chunks similarity 
+similarityResults.sort((a, b) => b.similarity - a.similarity);
+//get these three chunks from the array
+let contextsTopSimilartyChunks = similarityResults.slice(0, 3).map((result) => result.chunk);
+contextsTopSimilartyChunks = contextsTopSimilartyChunks.map(chunk=>chunk.rawText)
+
+
+
+
+
+
+  //9. build the prompt
+//TODO : TAKE THE LANGUAGE FROM THE USER (req.body.language) 
+ const languageResponse = 'English'; // defula output language is english
+  const promptStart = `Answer the question based on the context below with ${languageResponse}:\n\n`;
+  const promptEnd = `\n\nQuestion: ${query} \n\nAnswer:`;
+  // const chats = `chat history: ${chathistory}`;
+  
+  const prompt = `${promptStart} ${contextsTopSimilartyChunks} ${promptEnd}`;
+
+  console.log('--prompt--', prompt);
+
+  // const prompt = `Answer The question based on the context below with English. Question is : ${query}`
+  chathistory.push({role:"user",content:prompt})
+  // 10. get the completion from openai
+  const response = await getCompletion(chathistory);
+
+  await chatmodel.findOneAndUpdate({
+    _id : id,
+  },{
+    $push:{
+      messages: {role: 'assistant', content: response  },
+    }
+  })
+  console.log('--completion--', response);
+  // 11. return the response
+  res.status(200).json({ response : response,topchunks: contextsTopSimilartyChunks});
+  } catch (error) {
+    res.json({error:error.message})
+  }
+
 };
