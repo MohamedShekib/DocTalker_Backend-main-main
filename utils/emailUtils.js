@@ -2,7 +2,10 @@ const nodemailer = require("nodemailer");
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
-  service: 'hotmail',
+  service: "Gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     // TODO: Update The names to be more secure
     user: process.env.HOTMAIL_EMAIL,
@@ -23,7 +26,13 @@ const sendOTPEmail = async (toEmail, otp) => {
     };
 
     // Send email
-    transporter.sendMail(mailOptions, (error, info)) ;
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log("Error sending OTP email:", error);
+      } else {
+        console.log("OTP Email sent successfully:", info.response);
+      }
+    });
 
   } catch (error) {
     console.log("Error sending OTP email:", error);

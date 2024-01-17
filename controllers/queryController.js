@@ -2,7 +2,7 @@ const { getCompletion } = require("../services/openAi");
 const { getEmbeddings } = require("../services/huggingface");
 const { connectDB } = require("../config/database");
 const Doc = require("../models/document");
-const chatModel = require("../models/chat");
+const chatModel = require("../models/Chat");
 const userModel = require("../models/user");
 const { cosineSimilarity } = require("../utils/cosineSimilarity");
 

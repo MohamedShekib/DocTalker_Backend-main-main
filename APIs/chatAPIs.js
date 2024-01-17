@@ -1,5 +1,5 @@
 const userModel = require("../models/user")
-const chatModel = require("../models/chat")
+const chatModel = require("../models/Chat")
 const Doc = require("../models/document")
 
 

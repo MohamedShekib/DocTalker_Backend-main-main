@@ -1,9 +1,9 @@
 const DocumentModel = require("../models/document")
-const chatmodel = require("../models/chat")
+const chatmodel = require("../models/Chat")
 const { connectDB } = require("../config/database")
 const { convertDocToChunks } = require("../utils/extractDataFromDocs")
 const { getEmbeddings } = require("../services/huggingface")
-const Chat = require("../models/chat")
+const Chat = require("../models/Chat")
 
 exports.handler = async (req, res) => {
   // 1. check for POST call

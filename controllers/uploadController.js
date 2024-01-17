@@ -3,7 +3,7 @@ const Doc = require('../models/document');
 const slugify = require('slugify');
 const {uploadFile} = require('../services/aws');
 const {deleteFile}  = require('../services/aws');
-const chatmodel = require('../models/chat');
+const chatmodel = require('../models/Chat');
 
  
 exports.handler = async (req, res) => {

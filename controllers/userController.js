@@ -39,7 +39,6 @@ exports.deleteUser = async (req, res) => {
     await User.findByIdAndDelete(id);
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error("Delete User Error:", error);
     res.status(500).json({ error: "Unexpected error during user deletion." });
   }
 };
